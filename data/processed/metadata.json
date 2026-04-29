@@ -1,0 +1,5 @@
+{
+  "num_train": 2800,
+  "num_test": 700,
+  "num_classes": 5
+}

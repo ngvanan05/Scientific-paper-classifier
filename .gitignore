@@ -1,0 +1,54 @@
+# ===========================
+# Data files (quá lớn để commit)
+# ===========================
+
+# File gốc ~3.6GB
+data/unprocessed/
+
+# File preprocessed ~2GB (tự sinh bằng notebook 2)
+data/processed/data_arxiv_preprocessed.jsonl
+
+# File pickle train/test split ~2.7MB (tự sinh bằng data_processing.py)
+data/processed/processed_data.pkl
+
+# Giữ lại metadata.json (nhỏ, hữu ích để tham khảo)
+!data/processed/metadata.json
+
+# ===========================
+# Python
+# ===========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# ===========================
+# Jupyter Notebooks
+# ===========================
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# ===========================
+# IDE / OS
+# ===========================
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# ===========================
+# Misc
+# ===========================
+*.log
+*.tmp
