@@ -35,12 +35,14 @@ st.markdown("---")
 # --- Tải mô hình ---
 @st.cache_resource
 def load_predictor():
-    return Predictor()
+    try:
+        return Predictor()
+    except FileNotFoundError as e:
+        return str(e)
 
-try:
-    predictor = load_predictor()
-except FileNotFoundError as e:
-    st.error(str(e))
+predictor = load_predictor()
+if isinstance(predictor, str):
+    st.error(predictor)
     st.stop()
 
 # --- Hướng dẫn ---

@@ -59,13 +59,11 @@ class Predictor:
         if isinstance(texts, str):
             texts = [texts]
 
-        # Lọc bỏ các text rỗng hoặc None, giữ index để map kết quả về
+        # Lọc bỏ các text rỗng hoặc None
         valid_texts = []
-        valid_indices = []
-        for i, t in enumerate(texts):
+        for t in texts:
             if t and isinstance(t, str) and t.strip():
                 valid_texts.append(t)
-                valid_indices.append(i)
 
         if not valid_texts:
             return []

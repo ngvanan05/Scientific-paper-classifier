@@ -1,4 +1,4 @@
-# 📊 Hệ thống Phân loại Văn bản Khoa học arXiv
+# 📊 Hệ thống Phân loại Văn bản Khoa học
 
 Hệ thống Machine Learning phân loại tự động các bài báo từ **arXiv** theo lĩnh vực nghiên cứu, kết hợp **Sentence Embeddings** (`intfloat/multilingual-e5-base`) và **SVM** để đạt hiệu quả cao trong việc hiểu và gán nhãn văn bản khoa học.
 
@@ -215,8 +215,8 @@ Label (astro-ph / cond-mat / cs / math / physics)
 ### 1. Clone và cài đặt
 
 ```bash
-git clone <repo-url>
-cd MIDTERM_PROJECT
+git clone https://gitlab.com/vanan-portfolio/scientific-paper-classifier.git
+cd scientific-paper-classifier
 python -m venv venv
 venv\Scripts\activate        # Windows
 # source venv/bin/activate   # Linux/Mac
