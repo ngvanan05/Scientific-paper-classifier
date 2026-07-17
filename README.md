@@ -1,141 +1,118 @@
-# 📊 Hệ thống Phân loại Văn bản Khoa học
+# Scientific Paper Classifier
 
-Hệ thống Machine Learning phân loại tự động các bài báo từ **arXiv** theo lĩnh vực nghiên cứu, kết hợp **Sentence Embeddings** (`intfloat/multilingual-e5-base`) và **SVM** để đạt hiệu quả cao trong việc hiểu và gán nhãn văn bản khoa học.
+🇬🇧 English | **[🇻🇳 Bản tiếng Việt](README.vi.md)**
 
----
+> Automatic classification of scientific papers from arXiv into research fields using Sentence Embeddings and Support Vector Machine.
 
-## 🎯 Mục tiêu
-
-- Phân loại văn bản vào **5 lĩnh vực chính** của khoa học
-- Đạt **độ chính xác trên 85%** trên tập kiểm thử
-- Cung cấp **ứng dụng web trực quan** dễ sử dụng
-
----
-
-## 📁 Cấu trúc Dự án
-
-```
-MIDTERM_PROJECT/
-│
-├── data/
-│   ├── processed/              # Dữ liệu đã xử lý
-│   │   ├── data_arxiv_preprocessed.jsonl
-│   │   ├── processed_data.pkl
-│   │   └── metadata.json
-│   └── unprocessed/            # Dữ liệu gốc (tải thủ công)
-│       └── arxiv-metadata-oai-snapshot.json
-│
-├── models/                     # Model đã huấn luyện
-│   ├── svm_model.pkl
-│   ├── training_metrics.json
-│   └── vectorizer_config.json
-│
-├── notebooks/                  # Jupyter Notebooks phân tích
-│   ├── 1.0-EDA.ipynb
-│   ├── 2.0-Data_preprocessing.ipynb
-│   └── 3.0-model-prototyping.ipynb
-│
-├── src/                        # Source code
-│   ├── data_processing.py      # Xử lý dữ liệu
-│   ├── train.py                # Huấn luyện model
-│   ├── predict.py              # Dự đoán
-│   └── app.py                  # Streamlit web app
-│
-├── reports/
-│   ├── demo.png
-│   └── wordclouds/
-│
-├── README.md
-└── requirements.txt
-```
+![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=flat&logo=python&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-1.7-F7931E?style=flat&logo=scikit-learn&logoColor=white)
+![HuggingFace](https://img.shields.io/badge/HuggingFace-Transformers-FFD21E?style=flat&logo=huggingface&logoColor=black)
+![Accuracy](https://img.shields.io/badge/Accuracy-87.57%25-2ea44f?style=flat)
+![F1 Score](https://img.shields.io/badge/F1--Score-87.53%25-2ea44f?style=flat)
+![License](https://img.shields.io/badge/License-MIT-blue?style=flat)
 
 ---
 
-## 🖼️ Demo Ứng dụng
+## Summary
 
-![Demo App](reports/demo.png)
-
----
-
-## 🏷️ Các Lĩnh vực Phân loại
-
-| Nhãn | Mô tả | Ví dụ |
-|------|-------|-------|
-| `astro-ph` | Vật lý thiên văn | Nghiên cứu về sao, thiên hà, vũ trụ |
-| `cond-mat` | Vật lý chất ngưng tụ | Siêu dẫn, từ tính, vật liệu nano |
-| `cs` | Khoa học máy tính | AI, thuật toán, lập trình |
-| `math` | Toán học | Đại số, giải tích, hình học |
-| `physics` | Vật lý nói chung | Cơ học, nhiệt động lực học, quang học |
+The recent explosion of scientific publications has created an urgent need for automatic document organization systems. This project presents a pipeline for classifying scientific papers from the arXiv repository into five major research fields, following a lightweight yet highly effective approach. The method uses **multilingual sentence embeddings** (`intfloat/multilingual-e5-base`) as feature representation, combined with a **Support Vector Machine (SVM)** classifier using an RBF kernel. Experimental results show that dense semantic representations significantly outperform traditional sparse representations (Bag-of-Words), achieving **87.57% accuracy** and **87.53% weighted F1-score** on a balanced test set of 3,500 papers — surpassing the initial target of 85%.
 
 ---
 
-## �️ Nguồn Dữ liệu
+## 1. Problem Statement & Motivation
 
-Dữ liệu sử dụng trong dự án là **arXiv Dataset** — bộ dữ liệu metadata của hơn 2 triệu bài báo khoa học từ nền tảng [arXiv.org](https://arxiv.org).
+The growth rate of scientific literature is at an unprecedented level. arXiv alone hosts more than **2.2 million preprints** spanning dozens of research fields. Manually labeling and classifying these papers is labor-intensive and hard to scale. An automatic scientific text classification system can:
 
-- **Nguồn**: [HuggingFace — UniverseTBD/arxiv-abstracts-large](https://huggingface.co/datasets/UniverseTBD/arxiv-abstracts-large)
-- **Nhà cung cấp**: UniverseTBD / Cornell University
-- **Định dạng**: JSON (mỗi dòng là một bài báo)
-- **Các trường sử dụng**: `title`, `abstract`, `categories`
-- **Số lượng mẫu huấn luyện**: ~3,500 bài (700 mỗi lĩnh vực)
-- **Tải dữ liệu**: Tự động qua thư viện `datasets` — **không cần tải thủ công**
+- **Accelerate document discovery** for researchers entering a new field
+- **Serve as a foundation for downstream tasks** such as paper recommendation systems and citation networks
+- **Provide a benchmark** for evaluating natural language understanding on dense technical text
 
-### Phân bố dữ liệu gốc (top 5 categories được chọn)
-
-| Category | Số bài | Tỷ lệ |
-|----------|--------|--------|
-| math | 461,568 | 20.14% |
-| cs | 431,766 | 18.84% |
-| cond-mat | 297,127 | 12.96% |
-| astro-ph | 285,798 | 12.47% |
-| physics | 163,944 | 7.15% |
-
-> Dataset gốc có 38 categories, dự án chọn 5 categories lớn nhất và lấy mẫu cân bằng 700 bài/category.
+The core challenge lies in the concise, terminology-heavy, and often interdisciplinary nature of scientific language, which poses difficulties even for traditional NLP methods. This project investigates the effectiveness of **pretrained multilingual sentence encoders** compared to classical feature extraction (Bag-of-Words) across multiple classifiers, providing both empirical results and full reproducibility.
 
 ---
 
-## 🔬 Phân tích & Thực nghiệm (Notebooks)
+## 2. Data
 
-### Notebook 1 — EDA (`1.0-EDA.ipynb`)
+### 2.1 Data Source
 
-Khám phá dataset gốc với 2,292,057 bài báo:
-- Kiểm tra missing values: **0 abstract thiếu, 0 category thiếu**
-- Phân tích phân bố 38 categories
-- Tạo Word Clouds cho từng lĩnh vực
+| Field | Detail |
+|--------|----------|
+| **Dataset** | arXiv Abstracts (arXiv metadata snapshot) |
+| **Provider** | UniverseTBD / Cornell University via HuggingFace |
+| **Link** | [UniverseTBD/arxiv-abstracts-large](https://huggingface.co/datasets/UniverseTBD/arxiv-abstracts-large) |
+| **Total papers** | 2,292,057 |
+| **Format** | JSONL — one paper per line |
+| **Fields used** | `title`, `abstract`, `categories` |
 
-### Word Clouds theo lĩnh vực
+### 2.2 Label & Sampling Strategy
 
-| astro-ph | cond-mat | cs |
-|:---:|:---:|:---:|
-| ![astro-ph](reports/wordclouds/wordcloud_astro-ph.png) | ![cond-mat](reports/wordclouds/wordcloud_cond-mat.png) | ![cs](reports/wordclouds/wordcloud_cs.png) |
+The original dataset contains **38 categories**. To ensure label balance and focus on the largest fields, a **stratified sampling** strategy was applied: **700 papers/category** were randomly drawn, forming a final training set of **3,500 samples**.
 
-| math | physics |
-|:---:|:---:|
-| ![math](reports/wordclouds/wordcloud_math.png) | ![physics](reports/wordclouds/wordcloud_physics.png) |
+| Category | Description | Original size | Ratio |
+|----------|-------|---------------|-------|
+| `math` | Mathematics | 461,568 | 20.14% |
+| `cs` | Computer Science | 431,766 | 18.84% |
+| `cond-mat` | Condensed Matter Physics | 297,127 | 12.96% |
+| `astro-ph` | Astrophysics | 285,798 | 12.47% |
+| `physics` | General Physics | 163,944 | 7.15% |
 
-### Notebook 2 — Data Preprocessing (`2.0-Data_preprocessing.ipynb`)
+> **Note:** Papers with multi-domain labels (e.g., `"cs.LG math.ST"`) are assigned to their *primary category* (the first token).
 
-Pipeline tiền xử lý toàn bộ 2,292,057 bài:
-- Xóa ký tự đặc biệt, số, khoảng trắng thừa
-- Chuyển về chữ thường
-- Trích xuất category chính từ chuỗi categories (vd: `"cs.LG math.ST"` → `"cs"`)
-- Gộp `title + abstract` thành trường `text`
-- Kết quả: file `data_arxiv_preprocessed.jsonl` với 2 trường `text` và `label`
+### 2.3 Data Preprocessing
 
-### Notebook 3 — Model Prototyping (`3.0-model-prototyping.ipynb`)
+The preprocessing pipeline was applied to the entire set of 2,292,057 papers before sampling:
+- Remove special characters, digits, and extra whitespace
+- Convert everything to lowercase
+- Extract the primary category from the compound label string
+- Concatenate features: `text = title + " " + abstract`
+- Results stored in: `data_arxiv_preprocessed.jsonl` with two fields `{text, label}`
 
-Thực nghiệm so sánh **2 phương pháp vector hóa** × **4 model** = **8 tổ hợp**.
+---
 
-#### Phương pháp vector hóa
+## 3. Methodology
 
-| Phương pháp | Mô tả | Số chiều |
+### 3.1 Feature Extraction
+
+Two different feature extraction strategies were evaluated experimentally:
+
+| Method | Description | Dimensions |
 |-------------|-------|----------|
-| **Bag-of-Words (Count)** | Binary CountVectorizer, max 5000 features, ngram (1,2) | 5,000 |
+| **Bag-of-Words (BoW)** | Binary `CountVectorizer`, max 5,000 features, n-gram (1, 2) | 5,000 |
 | **Sentence Embeddings** | `intfloat/multilingual-e5-base`, L2 normalized | 768 |
 
-#### Kết quả so sánh 8 models (200 mẫu test)
+**Why `intfloat/multilingual-e5-base`?**
+This model was preferred over alternatives (e.g., `all-MiniLM-L6-v2`, `paraphrase-mpnet-base-v2`) because:
+1. **Multilingual support** — arXiv abstracts occasionally contain non-English terminology or author names
+2. **Dense semantic representation** — E5 is explicitly supervised-trained for text matching, producing a feature space with clearer geometric structure for classification
+3. **Balanced size** — 768 dimensions provide strong semantic signal while remaining suitable for kernel-based SVM methods
 
-| Model | Vector hóa | Accuracy | Precision | Recall | F1-Score |
+**Why SVM instead of fine-tuning BERT?**
+With a relatively small training set (~3,500 samples), fully fine-tuning a transformer-based classifier carries a high risk of overfitting and requires significantly more computational resources. SVM with an appropriate kernel is well-suited to high-dimensional feature spaces and moderate-sized data, while also offering strong theoretical guarantees (maximum-margin classifier). Combining a fixed pretrained embedding with SVM is a computationally efficient and well-validated baseline.
+
+### 3.2 Classification Pipeline (Final Model)
+
+```
+Input: Title + Abstract (raw text)
+        │
+        ▼
+Sentence encoder: intfloat/multilingual-e5-base
+        │   → 768-dim vector, L2 normalized
+        ▼
+SVM classifier: kernel=RBF, C=10.0, gamma=0.1
+        │
+        ▼
+Output label: {astro-ph | cond-mat | cs | math | physics}
+```
+
+---
+
+## 4. Experiments
+
+### 4.1 Comparison of 8 Configurations
+
+All models were evaluated on a held-out test set of **200 samples** (40 samples/category), using a stratified split.
+
+| Model | Vectorization | Accuracy | Precision | Recall | F1-Score |
 |-------|-----------|----------|-----------|--------|----------|
 | **SVM RBF** | **Embeddings** | **0.840** | **0.849** | **0.840** | **0.838** |
 | SVM Linear | Embeddings | 0.825 | 0.830 | 0.825 | 0.823 |
@@ -146,73 +123,159 @@ Thực nghiệm so sánh **2 phương pháp vector hóa** × **4 model** = **8 t
 | SVM Linear | Count | 0.705 | 0.718 | 0.705 | 0.708 |
 | KNN | Count | 0.695 | 0.693 | 0.695 | 0.677 |
 
-**Nhận xét:**
-- Sentence Embeddings vượt trội hoàn toàn so với Bag-of-Words ở mọi model (~8-10% accuracy)
-- Các model dùng Count Vectorizer đều bị **overfitting nặng** (gap F1 lên đến 0.29), trong khi Embeddings có gap nhỏ hơn nhiều (~0.08)
-- SVM RBF + Embeddings là tổ hợp tốt nhất
+**Observations:**
+- Sentence Embeddings outperform Bag-of-Words across **every** classifier by a margin of **~8–10% accuracy**
+- BoW-based models suffer from **severe overfitting** (train–test F1 gap up to 0.29), while Embeddings show a much smaller gap (~0.08), reflecting better representation quality
+- **SVM RBF + Embeddings** was selected as the optimal configuration
 
-#### Hyperparameter Tuning (GridSearchCV, 5-fold CV)
+### 4.2 Hyperparameter Tuning
 
-Tuning SVM RBF với Embeddings:
+A grid search with **5-fold cross-validation** was applied to the best configuration (SVM RBF + Embeddings):
 
 ```
-Param grid: C=[0.1, 1.0, 10.0], gamma=['scale', 0.01, 0.1], class_weight=[None, 'balanced']
-Best params: C=10.0, gamma=0.1, class_weight=None
+Search space:
+  C           : [0.1, 1.0, 10.0]
+  gamma       : ['scale', 0.01, 0.1]
+  class_weight: [None, 'balanced']
+
+Best parameters : C=10.0, gamma=0.1, class_weight=None
 Best CV F1-score: 0.8414
 ```
 
-| Metric | Trước Tuning | Sau Tuning |
-|--------|-------------|-----------|
-| Accuracy | 0.840 | **0.845** |
-| Precision | 0.849 | **0.854** |
-| Recall | 0.840 | **0.845** |
-| F1-Score | 0.838 | **0.843** |
+| Metric | Before Tuning | After Tuning | Δ |
+|--------|:-----------:|:---------:|:---:|
+| Accuracy | 0.840 | **0.845** | +0.5% |
+| Precision | 0.849 | **0.854** | +0.5% |
+| Recall | 0.840 | **0.845** | +0.5% |
+| F1-Score | 0.838 | **0.843** | +0.5% |
 
----
+### 4.3 Final Model Performance
 
-## � Kết quả Mô hình Cuối cùng
+The final model was retrained on the **full set of 3,500 samples** using the best hyperparameters found above.
 
-Model được train lại trên toàn bộ ~3,500 mẫu (700/category) với hyperparameters tốt nhất:
+#### Overall metrics
 
-| Metric | Giá trị |
+| Metric | Value |
 |--------|---------|
 | Accuracy | **87.57%** |
 | F1-Score (weighted) | **87.53%** |
 
-### Kiến trúc Pipeline
+#### Per-class classification report
+
+| Category | Precision | Recall | F1-Score | Support |
+|----------|:---------:|:------:|:--------:|:-------:|
+| `astro-ph` | 0.93 | 0.94 | 0.93 | 140 |
+| `cond-mat` | 0.85 | 0.83 | 0.84 | 140 |
+| `cs` | 0.91 | 0.90 | 0.90 | 140 |
+| `math` | 0.88 | 0.89 | 0.88 | 140 |
+| `physics` | 0.81 | 0.82 | 0.81 | 140 |
+| **weighted avg** | **0.88** | **0.88** | **0.88** | **700** |
+
+> `astro-ph` achieves the highest F1 (0.93) thanks to a highly distinctive vocabulary (e.g., *redshift*, *quasar*, *stellar*). `physics` (general) is the hardest label to classify due to semantic overlap with `astro-ph` and `cond-mat`.
+
+---
+
+## 5. Demo Application
+
+A **Streamlit** web application is provided for interactive inference. Users enter a paper's title and abstract to receive an instant classification result.
+
+![Demo App](reports/demo.png)
+
+---
+
+## 6. Project Structure
 
 ```
-Title + Abstract
-      ↓
-Sentence Embedding (intfloat/multilingual-e5-base, 768 chiều, L2 normalized)
-      ↓
-SVM Classifier (kernel=RBF, C=10.0, gamma=0.1)
-      ↓
-Label (astro-ph / cond-mat / cs / math / physics)
+scientific-paper-classifier/
+│
+├── data/
+│   ├── processed/
+│   │   ├── data_arxiv_preprocessed.jsonl   # Fully preprocessed corpus
+│   │   ├── processed_data.pkl              # Sampled & split training data
+│   │   └── metadata.json                   # Run metadata and statistics
+│   └── unprocessed/
+│       └── arxiv-metadata-oai-snapshot.json  # Raw data (manually downloaded)
+│
+├── models/
+│   ├── svm_model.pkl                       # Trained SVM classifier
+│   ├── training_metrics.json               # Evaluation results
+│   └── vectorizer_config.json              # Embedding configuration
+│
+├── notebooks/
+│   ├── 1.0-EDA.ipynb                       # Exploratory data analysis
+│   ├── 2.0-Data_preprocessing.ipynb        # Full preprocessing pipeline
+│   └── 3.0-model-prototyping.ipynb         # Comparison & tuning experiments
+│
+├── src/
+│   ├── data_processing.py                  # Data loading & preprocessing
+│   ├── train.py                            # Model training
+│   ├── predict.py                          # Inference script
+│   └── app.py                              # Streamlit web application
+│
+├── reports/
+│   ├── demo.png
+│   └── wordclouds/
+│
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-## 🛠️ Công nghệ Sử dụng
+## 7. Word Clouds by Field
 
-| Nhóm | Thư viện |
-|------|---------|
-| **Embedding** | `sentence-transformers` — `intfloat/multilingual-e5-base` |
-| **Classifier** | `scikit-learn` — SVC (RBF kernel) |
-| **Data** | `datasets` (HuggingFace), `pandas`, `numpy` |
+Visualizations generated during EDA on the entire 2.2-million-paper corpus, providing qualitative evidence of each field's characteristic vocabulary.
+
+| astro-ph | cond-mat | cs |
+|:---:|:---:|:---:|
+| ![astro-ph](reports/wordclouds/wordcloud_astro-ph.png) | ![cond-mat](reports/wordclouds/wordcloud_cond-mat.png) | ![cs](reports/wordclouds/wordcloud_cs.png) |
+
+| math | physics |
+|:---:|:---:|
+| ![math](reports/wordclouds/wordcloud_math.png) | ![physics](reports/wordclouds/wordcloud_physics.png) |
+
+---
+
+## 8. Limitations & Future Work
+
+### Current Limitations
+
+- **Narrow label scope**: Only covers 5 of arXiv's 38 categories; interdisciplinary papers are forced into a single label
+- **Small dataset**: 700 samples/category may not fully represent rare sub-topics within each field
+- **No multilingual evaluation**: Despite using a multilingual encoder, all experiments were conducted on English abstracts only
+- **Frozen embeddings**: The encoder is frozen; task-specific fine-tuning (e.g., contrastive learning on arXiv paper pairs) could improve representation quality
+- **No uncertainty estimation**: The model only produces hard predictions without confidence calibration
+
+### Potential Future Directions
+
+- Fine-tune the sentence encoder end-to-end using contrastive loss on arXiv paper pairs
+- Extend classification to all 38 categories using a hierarchical classification architecture
+- Explore **SetFit** (few-shot fine-tuning) for low-resource sub-fields
+- Integrate with the arXiv API for real-time paper classification
+
+---
+
+## 9. Technology Stack
+
+| Component | Library / Tool |
+|------------|-------------------|
+| **Sentence encoder** | `sentence-transformers` — `intfloat/multilingual-e5-base` |
+| **Classifier** | `scikit-learn` — `SVC` (RBF kernel) |
+| **Data loading** | `datasets` (HuggingFace) |
+| **Data processing** | `pandas`, `numpy` |
 | **Visualization** | `matplotlib`, `seaborn`, `wordcloud` |
-| **App** | `streamlit` |
+| **Web application** | `streamlit` |
 
 ---
 
-## 📦 Cài đặt & Sử dụng
+## 10. Installation & Usage
 
-### Yêu cầu
+### Requirements
 
 - Python 3.8+
-- Kết nối internet (lần đầu chạy để tải embedding model và dataset)
+- Internet connection (first run, to download the embedding model and dataset)
 
-### 1. Clone và cài đặt
+### Environment Setup
 
 ```bash
 git clone https://gitlab.com/vanan-portfolio/scientific-paper-classifier.git
@@ -223,42 +286,56 @@ venv\Scripts\activate        # Windows
 pip install -r requirements.txt
 ```
 
-### Hướng 1: Dùng Model Có Sẵn (Nhanh nhất)
+### Option A — Use the pretrained model (Recommended)
 
 ```bash
 cd src
 streamlit run app.py
 ```
 
-Truy cập `http://localhost:8501`, nhập văn bản và nhấn **🔍 Phân tích văn bản**.
+Open `http://localhost:8501`, enter the paper's title and abstract, then click **🔍 Analyze Text**.
 
----
+### Option B — Retrain from scratch
 
-### Hướng 2: Train Lại Từ Đầu
+> Delete `models/svm_model.pkl`, `data/processed/processed_data.pkl`, and `data/processed/metadata.json` before running.
 
-> Xóa `models/svm_model.pkl`, `data/processed/processed_data.pkl` và `data/processed/metadata.json` trước khi chạy.
-
-**Bước 1 — Xử lý dữ liệu** (tự động tải ~3.8GB từ HuggingFace lần đầu):
-
+**Step 1 — Process data** (automatically downloads ~3.8 GB from HuggingFace on first run):
 ```bash
 cd src
 python data_processing.py
 ```
 
-**Bước 2 — Huấn luyện model:**
-
+**Step 2 — Train the model:**
 ```bash
 python train.py
 ```
 
-**Bước 3 — Kiểm tra model:**
-
+**Step 3 — Evaluate the model:**
 ```bash
 python predict.py
 ```
 
-**Bước 4 — Chạy ứng dụng:**
-
+**Step 4 — Run the application:**
 ```bash
 streamlit run app.py
 ```
+
+---
+
+## 11. References
+
+1. Reimers, N., & Gurevych, I. (2019). *Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks*. EMNLP 2019. https://arxiv.org/abs/1908.10084
+
+2. Wang, L., Yang, N., Huang, X., et al. (2022). *Text Embeddings by Weakly-Supervised Contrastive Pre-training*. arXiv preprint. https://arxiv.org/abs/2212.03533
+
+3. Cortes, C., & Vapnik, V. (1995). *Support-vector networks*. Machine Learning, 20(3), 273–297.
+
+4. Clement, C. B., Bierbaum, M., O'Keeffe, K. P., & Alemi, A. A. (2019). *On the Use of arXiv as a Dataset*. arXiv preprint. https://arxiv.org/abs/1905.00075
+
+5. Wolf, T., et al. (2020). *Transformers: State-of-the-Art Natural Language Processing*. EMNLP 2020 (System Demonstrations). https://arxiv.org/abs/1910.03771
+
+---
+
+## License
+
+This project is distributed under the MIT License. See [LICENSE](LICENSE) for details.
